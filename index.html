@@ -61,7 +61,7 @@
   const renderComments = () => {
     const commentsHtml = comments
       .map((comment, index) => {
-        return `<li class="comment">
+        return `<li class="comment" data-comment="${index}">
         <div class="comment-header">
           <div id="name">${comment.name}</div>
           <div>${comment.date}</div>
@@ -111,9 +111,9 @@
     }
 
     comments.push({
-      name: inputNameElement.value,
+      name: inputNameElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt"),
       date: commentsDate,
-      text: inputTextElement.value
+      text: inputTextElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt")
     });
 
     inputNameElement.value = "";
@@ -179,6 +179,29 @@
   }
 
 
+
+
+
+
+
+  const commentsElements = document.querySelectorAll(".comment");
+
+  for (const commentsElement of commentsElements) {
+
+    commentsElement.addEventListener('click', () => {
+
+      const index = commentsElement.dataset.comment;
+
+
+      inputTextElement.value = `${comments[index].name} 
+      ${comments[index].text}`;
+
+
+    })
+
+
+
+  }
 
   console.log("It works!");
 </script>
