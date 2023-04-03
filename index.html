@@ -48,7 +48,7 @@
   }
 
   const renderComments = () => {
-    console.log(comments);
+
     const commentsHtml = comments
       .map((comment) => {
         return `<li class="comment" data-comment="${comment.id}">
@@ -95,6 +95,7 @@
             comments = responseData.comments;
             renderComments();
             likeCommentEvent();
+            commentsInputElement();
 
           });
       });
@@ -129,19 +130,15 @@
         name: inputNameElement.value,
 
       })
+    }).then(() => {
+      renderComments();
+      getComments();
+      inputNameElement.value = "";
+      inputTextElement.value = "";
+      buttonElement.disabled = true;
+      commentsInputElement();
     })
-    renderComments();
-    getComments();
 
-
-
-
-
-    inputNameElement.value = "";
-    inputTextElement.value = "";
-    buttonElement.disabled = true;
-
-    renderComments();
 
 
   });
@@ -204,26 +201,34 @@
 
 
 
+  const commentsInputElement = () => {
+    const commentsElements = document.querySelectorAll(".comment");
+    console.log(commentsElements)
+
+    for (const commentsElement of commentsElements) {
 
 
-  const commentsElements = document.querySelectorAll(".comment");
 
-  for (const commentsElement of commentsElements) {
+      commentsElement.addEventListener('click', () => {
 
-    commentsElement.addEventListener('click', () => {
-
-      const index = commentsElement.dataset.comment;
+        const index = commentsElement.dataset.comment;
 
 
-      inputTextElement.value = `${comments[index].name} 
-      ${comments[index].text}`;
+        const selectComment = comments.find((comment) => Number(comment.id) === Number(index));
 
 
-    })
+        inputTextElement.value = `${selectComment.author.name} 
+      ${selectComment.text}`;
+
+      })
 
 
+
+    }
 
   }
+
+
 
   console.log("It works!");
 </script>
