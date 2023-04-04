@@ -36,35 +36,25 @@
 
 
 
-  const comments = [
-    {
-      name: "Глеб Фокин",
-      date: '12.02.22 12:18',
-      text: "Это будет первый комментарий на этой странице",
-      like: 0
-    },
-    {
-      name: "Варвара Н.",
-      date: '13.02.22 19:22',
-      text: "Мне нравится как оформлена эта страница! ❤",
-      like: 0
-    },
-
-  ];
+  let comments = [];
 
   buttonElement.disabled = true;
 
 
 
-
+  const convertDate = (date) => {
+    const options = { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }
+    return new Date(date).toLocaleString([], options);
+  }
 
   const renderComments = () => {
+
     const commentsHtml = comments
-      .map((comment, index) => {
-        return `<li class="comment" data-comment="${index}">
+      .map((comment) => {
+        return `<li class="comment" data-comment="${comment.id}">
         <div class="comment-header">
-          <div id="name">${comment.name}</div>
-          <div>${comment.date}</div>
+          <div id="name">${comment.author.name}</div>
+          <div>${convertDate(comment.date)}</div>
         </div>
         <div class="comment-body">
           <div id="text" class="comment-text">
@@ -73,8 +63,8 @@
         </div>
         <div class="comment-footer">
           <div class="likes">
-            <span  class="likes-counter">${comment.like}</span>
-            <button data-index="${index}" class="like-button ${comment.like === 1 && '-active-like'}"></button>
+            <span  class="likes-counter">${comment.likes}</span>
+            <button data-index="${comment.id}" class="like-button ${comment.isLiked && '-active-like'}"></button>
           </div>
         </div>
       </li>`;
@@ -89,7 +79,29 @@
   renderComments();
 
 
+  const getComments = () => {
+    const fetchComments = fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+      method: "GET"
+    });
 
+    fetchComments
+      .then((response) => {
+        const jsonPromise = response.json();
+
+
+        jsonPromise
+          .then((responseData) => {
+
+            comments = responseData.comments;
+            renderComments();
+            likeCommentEvent();
+            commentsInputElement();
+
+          });
+      });
+  }
+
+  getComments();
 
   buttonElement.addEventListener('click', () => {
     const options = { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }
@@ -110,20 +122,26 @@
       return;
     }
 
-    comments.push({
-      name: inputNameElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt"),
-      date: commentsDate,
-      text: inputTextElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt")
-    });
+    fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+      method: "POST",
+      body: JSON.stringify({
 
-    inputNameElement.value = "";
-    inputTextElement.value = "";
-    buttonElement.disabled = true;
+        text: inputTextElement.value,
+        name: inputNameElement.value,
 
-    renderComments();
+      })
+    }).then(() => {
+      renderComments();
+      getComments();
+      inputNameElement.value = "";
+      inputTextElement.value = "";
+      buttonElement.disabled = true;
+      commentsInputElement();
+    })
 
-  })
 
+
+  });
 
 
 
@@ -133,23 +151,24 @@
 
     for (const likeButtonElement of likeButtonElements) {
 
-      likeButtonElement.addEventListener('click', () => {
+      likeButtonElement.addEventListener('click', (event) => {
 
         likeButtonElement.classList.toggle('-active-like');
 
         const index = likeButtonElement.dataset.index;
 
 
+        const selectComments = comments.find((comment) => Number(comment.id) === Number(index));
 
-        if (comments[index].like === 0) {
-
-          comments[index].like += 1;
-
+        if (!selectComments.isLiked) {
+          selectComments.likes += 1;
+          selectComments.isLiked = true;
         } else {
-
-          comments[index].like -= 1
+          selectComments.likes -= 1
+          selectComments.isLiked = false;
         }
 
+        event.stopPropagation();
         renderComments();
         likeCommentEvent();
 
@@ -182,26 +201,34 @@
 
 
 
+  const commentsInputElement = () => {
+    const commentsElements = document.querySelectorAll(".comment");
+    console.log(commentsElements)
+
+    for (const commentsElement of commentsElements) {
 
 
-  const commentsElements = document.querySelectorAll(".comment");
 
-  for (const commentsElement of commentsElements) {
+      commentsElement.addEventListener('click', () => {
 
-    commentsElement.addEventListener('click', () => {
-
-      const index = commentsElement.dataset.comment;
+        const index = commentsElement.dataset.comment;
 
 
-      inputTextElement.value = `${comments[index].name} 
-      ${comments[index].text}`;
+        const selectComment = comments.find((comment) => Number(comment.id) === Number(index));
 
 
-    })
+        inputTextElement.value = `${selectComment.author.name} 
+      ${selectComment.text}`;
+
+      })
 
 
+
+    }
 
   }
+
+
 
   console.log("It works!");
 </script>
