@@ -11,7 +11,9 @@
     <ul class="comments" id="comments">
 
     </ul>
+    <p id="loader">Пожалуйста подождите, загружаю комментарии...</p>
     <div class="add-form">
+
       <input type="text" id="input-name" class="add-form-name" placeholder="Введите ваше имя" />
       <textarea type="textarea" id="input-text" class="add-form-text" placeholder="Введите ваш коментарий"
         rows="4"></textarea>
@@ -33,12 +35,15 @@
   const textElement = document.getElementById('text');
   const buttonElement = document.getElementById('add-button');
   const commentsElement = document.getElementById('comments');
+  const loaderElement = document.getElementById('loader');
 
 
 
   let comments = [];
 
   buttonElement.disabled = true;
+
+  loaderElement.style.visibility = "hidden";
 
 
 
@@ -64,7 +69,7 @@
         <div class="comment-footer">
           <div class="likes">
             <span  class="likes-counter">${comment.likes}</span>
-            <button data-index="${comment.id}" class="like-button ${comment.isLiked && '-active-like'}"></button>
+            <button data-index="${comment.id}" class="like-button ${comment.isLiked ? '-active-like' : ''}"></button>
           </div>
         </div>
       </li>`;
@@ -76,38 +81,41 @@
 
   };
 
+
+
   renderComments();
 
 
   const getComments = () => {
-    const fetchComments = fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+
+    return fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
       method: "GET"
-    });
-
-    fetchComments
+    })
       .then((response) => {
-        const jsonPromise = response.json();
+        return response.json();
+      })
 
+      .then((responseData) => {
 
-        jsonPromise
-          .then((responseData) => {
+        comments = responseData.comments;
+        renderComments();
+        likeCommentEvent();
+        commentsInputElement();
 
-            comments = responseData.comments;
-            renderComments();
-            likeCommentEvent();
-            commentsInputElement();
-
-          });
       });
   }
 
   getComments();
 
   buttonElement.addEventListener('click', () => {
+
     const options = { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }
     const commentsDate = new Date().toLocaleString([], options);
 
     const oldListHTML = commentsElement.innerHTML;
+
+    loaderElement.style.visibility = "visible";
+
 
     inputNameElement.style.backgroundColor = '';
     inputTextElement.style.backgroundColor = '';
@@ -122,6 +130,8 @@
       return;
     }
 
+    buttonElement.disabled = true;
+
     fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
       method: "POST",
       body: JSON.stringify({
@@ -130,14 +140,19 @@
         name: inputNameElement.value,
 
       })
-    }).then(() => {
-      renderComments();
-      getComments();
-      inputNameElement.value = "";
-      inputTextElement.value = "";
-      buttonElement.disabled = true;
-      commentsInputElement();
     })
+      .then(() => {
+        return getComments();
+
+      })
+      .then(() => {
+        renderComments();
+        inputNameElement.value = "";
+        inputTextElement.value = "";
+        buttonElement.disabled = false;
+        commentsInputElement();
+        loaderElement.style.visibility = "hidden";
+      })
 
 
 
@@ -153,30 +168,47 @@
 
       likeButtonElement.addEventListener('click', (event) => {
 
-        likeButtonElement.classList.toggle('-active-like');
-
-        const index = likeButtonElement.dataset.index;
+        likeButtonElement.classList.add('-loading-like');
 
 
-        const selectComments = comments.find((comment) => Number(comment.id) === Number(index));
+        delay(2000)
+          .then(() => {
 
-        if (!selectComments.isLiked) {
-          selectComments.likes += 1;
-          selectComments.isLiked = true;
-        } else {
-          selectComments.likes -= 1
-          selectComments.isLiked = false;
-        }
 
-        event.stopPropagation();
-        renderComments();
-        likeCommentEvent();
+            const index = likeButtonElement.dataset.index;
+
+            const selectComments = comments.find((comment) => Number(comment.id) === Number(index));
+
+            if (!selectComments.isLiked) {
+              selectComments.likes += 1;
+              selectComments.isLiked = true;
+            } else {
+              selectComments.likes -= 1
+              selectComments.isLiked = false;
+            }
+            likeButtonElement.classList.toggle('-active-like');
+
+            renderComments();
+            likeCommentEvent();
+          })
+
+        event.stopPropagation(); 
+
 
       })
 
 
     }
 
+  }
+
+
+  function delay(interval = 300) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, interval);
+    });
   }
 
   likeCommentEvent();
