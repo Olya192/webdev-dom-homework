@@ -154,14 +154,12 @@
       .then((response) => {
 
         if (response.status === 400) {
-          alert('Имя или текст комментария должны  быть не менее 3-х символов');
-          loaderElement.style.visibility = "hidden"
-          throw new Error("name или text должен содержать хотя бы 3 символа");
+          // alert('Имя или текст комментария должны  быть не менее 3-х символов');
+          throw new Error("Ваше имя и комментарий должны содержать хотя бы 3 символа");
         } else if (response.status === 500) {
           // alert("Кажется, что-то пошло не так, попробуй позже");
-          // loaderElement.style.visibility = "hidden";
           postComment();
-          throw new Error("Сервер упал");
+          // throw new Error("Сервис временно недоступен, пожалуйста попробуйте позже");
         } else {
           return response.json();
         }
@@ -182,10 +180,11 @@
       .catch((error) => {
         buttonElement.disabled = false;
         if (error.message === 'Failed to fetch') {
-          alert('Нет интернета');
-          loaderElement.style.visibility = "hidden";
+          alert('Нет соединения с интернетом, проверьте ваше подключение');
+        } else {
+          alert(error.message);
         }
-
+        loaderElement.style.visibility = "hidden";
       });
 
   })
