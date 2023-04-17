@@ -79,6 +79,7 @@
 
     commentsElement.innerHTML = commentsHtml;
 
+    loaderElement.style.visibility = "visible"
   };
 
 
@@ -94,16 +95,17 @@
       .then((response) => {
         return response.json();
       })
-
       .then((responseData) => {
-
         comments = responseData.comments;
         renderComments();
         likeCommentEvent();
         commentsInputElement();
-
+        loaderElement.style.visibility = "hidden"
       });
   }
+
+
+
 
   getComments();
 
@@ -113,8 +115,6 @@
     const commentsDate = new Date().toLocaleString([], options);
 
     const oldListHTML = commentsElement.innerHTML;
-
-    loaderElement.style.visibility = "visible";
 
 
     inputNameElement.style.backgroundColor = '';
@@ -132,16 +132,40 @@
 
     buttonElement.disabled = true;
 
+    postComment();
+
+
+  });
+
+  const postComment = (() => {
+
+    loaderElement.style.visibility = "visible";
+
     fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
       method: "POST",
       body: JSON.stringify({
 
         text: inputTextElement.value,
         name: inputNameElement.value,
+        forceError: true,
 
       })
     })
+      .then((response) => {
+
+        if (response.status === 400) {
+          // alert('Имя или текст комментария должны  быть не менее 3-х символов');
+          throw new Error("Ваше имя и комментарий должны содержать хотя бы 3 символа");
+        } else if (response.status === 500) {
+          // alert("Кажется, что-то пошло не так, попробуй позже");
+          postComment();
+          // throw new Error("Сервис временно недоступен, пожалуйста попробуйте позже");
+        } else {
+          return response.json();
+        }
+      })
       .then(() => {
+
         return getComments();
 
       })
@@ -153,12 +177,17 @@
         commentsInputElement();
         loaderElement.style.visibility = "hidden";
       })
+      .catch((error) => {
+        buttonElement.disabled = false;
+        if (error.message === 'Failed to fetch') {
+          alert('Нет соединения с интернетом, проверьте ваше подключение');
+        } else {
+          alert(error.message);
+        }
+        loaderElement.style.visibility = "hidden";
+      });
 
-
-
-  });
-
-
+  })
 
 
   const likeCommentEvent = () => {
@@ -186,13 +215,15 @@
               selectComments.likes -= 1
               selectComments.isLiked = false;
             }
+
             likeButtonElement.classList.toggle('-active-like');
 
             renderComments();
             likeCommentEvent();
+            loaderElement.style.visibility = "hidden";
           })
 
-        event.stopPropagation(); 
+        event.stopPropagation();
 
 
       })
@@ -259,8 +290,6 @@
     }
 
   }
-
-
 
   console.log("It works!");
 </script>
