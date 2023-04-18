@@ -36,8 +36,8 @@ export const postComment = (() => {
         method: "POST",
         body: JSON.stringify({
 
-            text: inputTextElement.value,
-            name: inputNameElement.value,
+            text: inputTextElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt"),
+            name: inputNameElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt")
             // forceError: true,
 
         })
@@ -77,7 +77,6 @@ export const postComment = (() => {
         });
 
 })
-
 
 
 
