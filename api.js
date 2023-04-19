@@ -64,6 +64,7 @@ export const postComment = (() => {
             inputTextElement.value = "";
             buttonElement.disabled = false;
             commentsInputElement();
+            likeCommentEvent();
             loaderElement.style.visibility = "hidden";
         })
         .catch((error) => {
