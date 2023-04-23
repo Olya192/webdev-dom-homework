@@ -10,10 +10,12 @@ const inputTextElement = document.getElementById('input-text');
 const buttonElement = document.getElementById('add-button');
 
 
+const host = "https://webdev-hw-api.vercel.app/api/v2/olga-buchkova/comments"
+
 const getComments = () => {
 
 
-    return fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+    return fetch(host, {
         method: "GET"
     })
         .then((response) => {
@@ -32,7 +34,7 @@ export const postComment = (() => {
 
     loaderElement.style.visibility = "visible";
 
-    fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+    fetch(host, {
         method: "POST",
         body: JSON.stringify({
 
