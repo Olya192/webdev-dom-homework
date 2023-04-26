@@ -1,9 +1,66 @@
-import { comments } from "./api.js";
-import { likeCommentEvent } from "./main.js";
+import { postComment } from "./api.js";
+import { renderLogin } from "./login.js";
 
 const appEl = document.getElementById('app');
-const buttonElement = document.getElementById('add-button');
 const loaderElement = document.getElementById('loader');
+const inputNameElement = document.getElementById('input-name');
+const inputTextElement = document.getElementById('input-text');
+const nameElement = document.getElementById('name');
+const textElement = document.getElementById('text');
+const buttonElement = document.getElementById('add-button');
+const commentsElement = document.getElementById('comments');
+
+
+let token = 0
+let nameUser;
+
+export const likeCommentEvent = (comments) => {
+  const likeButtonElements = document.querySelectorAll(".like-button");
+
+  for (const likeButtonElement of likeButtonElements) {
+
+    likeButtonElement.addEventListener('click', (event) => {
+
+      likeButtonElement.classList.add('-loading-like');
+      const loaderElement = document.getElementById('loader');
+
+      delay(2000)
+        .then(() => {
+
+
+          const index = likeButtonElement.dataset.index;
+
+          const selectComments = comments.find((comment) => comment.id === index);
+          if (!selectComments.isLiked) {
+            selectComments.likes += 1;
+            selectComments.isLiked = true;
+          } else {
+            selectComments.likes -= 1
+            selectComments.isLiked = false;
+          }
+
+          likeButtonElement.classList.toggle('-active-like');
+          console.log('111', comments);
+          renderComments(comments);
+          likeCommentEvent(comments);
+          loaderElement.style.visibility = "hidden";
+          console.log('222', comments);
+        })
+
+      event.stopPropagation();
+    })
+  }
+
+}
+
+
+function delay(interval = 300) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, interval);
+  });
+}
 
 
 const getCommentsEdit = (comment) => {
@@ -31,45 +88,85 @@ const convertDate = (date) => {
   return new Date(date).toLocaleString([], options);
 }
 
-const renderComments = () => {
+const renderComments = (comments) => {
+
 
   const commentsElement = document.getElementById('comments');
-  const loaderElement = document.getElementById('loader');
+
   const commentsHtml = comments
     .map((comment) => getCommentsEdit(comment)).join("");
 
 
-  commentsElement.innerHTML = commentsHtml;
 
-  loaderElement.style.visibility = "visible"
+
+
+  const inputHtml =
+    `<div class="add-form">
+    <input type = "text" id = "input-name" class="add-form-name" placeholder = "Введите ваше имя" />
+    <textarea type="textarea" id="input-text" class="add-form-text" placeholder="Введите ваш коментарий"
+      rows="4"></textarea>
+    <div class="add-form-row">
+      <button class="add-form-button" id="add-button">Написать</button>
+    </div>
+  </div >`;
+
+
 
   const appHtml = `<div class="container">
-<ul class="comments" id="comments">
-${commentsHtml}
-</ul>
-<p id="loader">Пожалуйста подождите, загружаю комментарии...</p>
-<div class="add-form">
+  <ul class="comments" id="comments">
+  ${commentsHtml}
+  </ul>
+    <p id="loader">Пожалуйста подождите, загружаю комментарии...</p>
+    <div id="inputForm">${!token ? `Что бы добавить комментарий <a id="authorization" href="#"> авторизируйтесь </a>` : inputHtml}</div>
+    </div >`;
 
-  <input type="text" id="input-name" class="add-form-name" placeholder="Введите ваше имя" />
-  <textarea type="textarea" id="input-text" class="add-form-text" placeholder="Введите ваш коментарий"
-    rows="4"></textarea>
-  <div class="add-form-row">
-    <button class="add-form-button" id="add-button">Написать</button>
-  </div>
-</div>
-</div> `
+  appEl.innerHTML = appHtml;
 
-  appEl.innerHTML = appHtml
-  buttonElement.disabled = true;
+  if (token) {
+    const inputNameElement = document.getElementById('input-name');
+    inputNameElement.value = nameUser;
+    inputNameElement.disabled = true;
+  }
 
+
+  const authorizationElement = document.getElementById('authorization');
+
+  if (authorizationElement) {
+    authorizationElement.addEventListener('click', () => {
+      renderLogin({
+        setToken: (newToken) => {
+          token = newToken;
+        },
+        setUser: (newUser) => {
+          nameUser = newUser;
+        },
+      });
+    });
+  }
+
+
+
+
+
+  const buttonElement = document.getElementById('add-button');
+  if (buttonElement) {
+    buttonElement.disabled = true;
+    buttonInputEvent();
+    inputEvent();
+  }
+
+  const loaderElement = document.getElementById('loader');
   loaderElement.style.visibility = "hidden";
 
+  commentsInputElement(comments);
+};
+
+const buttonInputEvent = () => {
+
+  const buttonElement = document.getElementById('add-button');
   buttonElement.addEventListener('click', () => {
-
-    const options = { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }
-    const commentsDate = new Date().toLocaleString([], options);
-
-    const oldListHTML = commentsElement.innerHTML;
+    const inputNameElement = document.getElementById('input-name');
+    const inputTextElement = document.getElementById('input-text');
 
 
     inputNameElement.style.backgroundColor = '';
@@ -87,16 +184,54 @@ ${commentsHtml}
 
     buttonElement.disabled = true;
 
-    postComment();
+    postComment(token);
 
 
   });
+}
 
-  likeCommentEvent
+export const inputEvent = () => {
 
-};
+  const buttonElement = document.getElementById('add-button');
+  const inputNameElement = document.getElementById('input-name');
+  const inputTextElement = document.getElementById('input-text');
+
+  const inputsCheck = () => {
+    if (inputNameElement.value === '' || inputTextElement.value === '') {
+      buttonElement.disabled = true;
+    } else {
+      buttonElement.disabled = false;
+    }
+  }
+
+  inputNameElement.addEventListener('input', function (event) {
+    inputsCheck();
+  })
+
+  inputTextElement.addEventListener('input', function (event) {
+    inputsCheck();
+  })
+
+}
 
 
+
+
+export const commentsInputElement = (comments) => {
+  const commentsElements = document.querySelectorAll(".comment");
+  console.log(commentsElements)
+  const inputTextElement = document.getElementById('input-text');
+  for (const commentsElement of commentsElements) {
+
+    commentsElement.addEventListener('click', () => {
+      const index = commentsElement.dataset.comment;
+      const selectComment = comments.find((comment) => comment.id === index);
+      inputTextElement.value = `${selectComment.author.name} 
+  ${selectComment.text} `;
+    })
+  }
+
+}
 
 
 
