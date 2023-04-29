@@ -1,19 +1,13 @@
 
-import { renderComments } from "./render.js";
-import { likeCommentEvent } from "./main.js";
-import { commentsInputElement } from "./main.js";
+import { renderComments, likeCommentEvent, commentsInputElement } from "./render.js";
 let comments = [];
 
-const loaderElement = document.getElementById('loader');
-const inputNameElement = document.getElementById('input-name');
-const inputTextElement = document.getElementById('input-text');
-const buttonElement = document.getElementById('add-button');
+const host = "https://webdev-hw-api.vercel.app/api/v2/olga-buchkova/comments"
+
+export const getComments = () => {
 
 
-const getComments = () => {
-
-
-    return fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+    return fetch(host, {
         method: "GET"
     })
         .then((response) => {
@@ -21,26 +15,31 @@ const getComments = () => {
         })
         .then((responseData) => {
             comments = responseData.comments;
-            renderComments();
-            likeCommentEvent();
-            commentsInputElement();
+            renderComments(comments);
+            likeCommentEvent(comments);
+            commentsInputElement(comments);
+            const loaderElement = document.getElementById('loader');
             loaderElement.style.visibility = "hidden"
         });
 }
 
-export const postComment = (() => {
-
+export const postComment = ((token) => {
+    const loaderElement = document.getElementById('loader');
     loaderElement.style.visibility = "visible";
-
-    fetch("https://webdev-hw-api.vercel.app/api/v1/olga-buchkova/comments", {
+    const inputNameElement = document.getElementById('input-name');
+    const inputTextElement = document.getElementById('input-text');
+    const buttonElement = document.getElementById('add-button');
+    fetch(host, {
         method: "POST",
         body: JSON.stringify({
 
             text: inputTextElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt"),
-            name: inputNameElement.value.replaceAll("<", "&lt").replaceAll(">", "&gt")
-            // forceError: true,
 
-        })
+        }),
+        headers: {
+
+            'Authorization': token,
+        },
     })
         .then((response) => {
 
@@ -59,12 +58,12 @@ export const postComment = (() => {
 
         })
         .then(() => {
-            renderComments();
+            renderComments(comments);
             inputNameElement.value = "";
             inputTextElement.value = "";
             buttonElement.disabled = false;
-            commentsInputElement();
-            likeCommentEvent();
+            commentsInputElement(comments);
+            likeCommentEvent(comments);
             loaderElement.style.visibility = "hidden";
         })
         .catch((error) => {
@@ -79,7 +78,23 @@ export const postComment = (() => {
 
 })
 
+export function loginUser({ login, password }) {
+    return fetch("https://webdev-hw-api.vercel.app/api/user/login", {
+        method: "POST",
+        body: JSON.stringify({
+            login,
+            password,
+        }),
+    }).then((response) => {
+        if (response.status === 400) {
+            throw new Error("Неверный логин или пароль");
+        }
+        return response.json();
+    });
+}
 
 
-export { getComments }
+
+
+
 export { comments }
