@@ -1,5 +1,6 @@
 import { postComment } from "./api.js";
 import { renderLogin } from "./login.js";
+import { format } from "date-fns"
 
 const appEl = document.getElementById('app');
 const loaderElement = document.getElementById('loader');
@@ -64,10 +65,12 @@ function delay(interval = 300) {
 
 
 const getCommentsEdit = (comment) => {
+  const createDate = format(new Date(comment.date), 'dd/MM/yyyy hh:mm');
+
   return `<li class="comment" data-comment="${comment.id}">
     <div class="comment-header">
       <div id="name">${comment.author.name}</div>
-      <div>${convertDate(comment.date)}</div>
+      <div>${createDate}</div>
     </div>
     <div class="comment-body">
       <div id="text" class="comment-text">
@@ -83,10 +86,10 @@ const getCommentsEdit = (comment) => {
   </li>`;
 }
 
-const convertDate = (date) => {
-  const options = { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }
-  return new Date(date).toLocaleString([], options);
-}
+// const convertDate = (date) => {
+//   const options = { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }
+//   return new Date(date).toLocaleString([], options);
+// }
 
 const renderComments = (comments) => {
 
